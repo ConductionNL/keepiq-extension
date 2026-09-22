@@ -21,11 +21,13 @@
 
 ## 3. Popup
 
-- [ ] 3.1 Write `entrypoints/popup/send/state.ts` and `entrypoints/popup/send/list.ts`: session list cache, session `Map` of links, rows with type icon, label, views counter, expiry, Password badge, Copy link or "Link no longer available", Remove with confirm, empty state, error state with Retry
-  - Copy link uses the shared clipboard helper so auto-clear applies
-- [ ] 3.2 Write `entrypoints/popup/send/new.ts`: type switch, content fields, Max views, Expiry presets and Custom, Password with show/hide, validation messages, offline and Argon2-unavailable disabled states, busy state during create
-- [ ] 3.3 Write `entrypoints/popup/send/created.ts`: read-only link field, Copy, the shown-once note with the view count, Done back to the refreshed list
-- [ ] 3.4 Mount the Send tab in `entrypoints/popup/index.html`, `main.ts` and `popup.css`, and add the Send entry to the item More menu from ext-vault-browse that calls `send.prefillFromItem` and opens the form prefilled
+- [ ] 3.1 Write `entrypoints/popup/hooks/useSends.tsx`: `SendProvider` context and `useSends()` with the session link `Map`, list cache, load status and the actions `refresh`, `create`, `remove`, `prefillFromItem`, each a `useMessage` call
+  - No import of `src/send/crypto.ts`, `src/send/argon2.ts`, `src/send/api.ts`, `src/send/link.ts`, `src/crypto/` or `src/api/` anywhere under `entrypoints/popup/`
+- [ ] 3.2 Write `entrypoints/popup/components/SendRow.tsx`, `ExpirySelect.tsx` and `MaxViewsInput.tsx`
+  - `SendRow` shows Copy link only when the link is in the provider's `Map`, otherwise "Link no longer available"; copy goes through the shared clipboard helper so auto-clear applies
+- [ ] 3.3 Write `entrypoints/popup/views/send/SendList.tsx` (rows, `EmptyState`, `ErrorBanner` with Retry, Remove with confirm) and `NewSend.tsx` (type switch, `TextField` and `MaskedField` content fields, `MaxViewsInput`, `ExpirySelect`, `MaskedField` send password, validation, offline and Argon2-unavailable disabled states, busy state during create)
+- [ ] 3.4 Write `entrypoints/popup/views/send/SendCreated.tsx`: read-only link field, Copy, the shown-once note with the view count, Done back to the refreshed list
+- [ ] 3.5 Mount `SendProvider` and the Send tab routes in `entrypoints/popup/App.tsx`, add styles to `popup.css`, and add the Send entry to the item More menu component from ext-vault-browse that calls `useSends().prefillFromItem` and opens `NewSend` prefilled
   - Entry is hidden for non-login and blocked items and disabled while offline
 
 ## 4. Verification

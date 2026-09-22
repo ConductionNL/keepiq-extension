@@ -52,7 +52,7 @@ None.
 
 ## Impact
 
-- New: `src/crypto/random.ts`, `src/generator/*.ts`, `public/wordlist/eff-large.txt` and its licence file, popup views `generator` and `generator-history`.
-- Edited: `src/messages.ts` (generator options, policy and history messages), `entrypoints/background.ts` (options, history and policy arms), `entrypoints/popup/*` (tab registration, lock-screen link, styles), `wxt.config.ts` only if `ext-vault-browse` did not already add the `tabs` permission.
-- Dependencies: `vitest` as a dev dependency with one `npm test` script; the EFF long wordlist (about 62 KB) ships in the bundle.
+- New: `src/crypto/random.ts`, `src/generator/*.ts`, `public/wordlist/eff-large.txt` and its licence file; React views `Generator` and `GeneratorHistory`, components `GeneratedValue`, `LengthSlider`, `OptionToggle` and `SubTabs`, hooks `useGeneratorOptions` and `useGeneratorHistory` under `entrypoints/popup/` (ADR-004).
+- Edited: `src/messages.ts` (generator options, policy and history messages), `entrypoints/background.ts` (options, history and policy arms), `entrypoints/popup/App.tsx` and `popup.css` (tab registration, lock-screen link, styles), `wxt.config.ts` only if `ext-vault-browse` did not already add the `tabs` permission.
+- Dependencies: `vitest` as a dev dependency with one `npm test` script; the EFF long wordlist (about 62 KB) ships in the bundle. React itself is already present from `ext-accounts-and-unlock`; no new UI dependency.
 - Not affected: content scripts, the API client beyond one new read, the vault cache.

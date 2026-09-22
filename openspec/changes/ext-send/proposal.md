@@ -57,7 +57,7 @@ The share link points at the web app's public page `<base>/public/send/<token>`;
 
 - New module `src/send/` (crypto, Argon2id wrapper, payload serialisation, expiry presets, API calls, link builder).
 - `src/messages.ts` gains `send.list`, `send.create`, `send.delete` and `send.prefillFromItem`.
-- `entrypoints/background.ts` registers the send handlers; `entrypoints/popup/` gains the Send tab views.
+- `entrypoints/background.ts` registers the send handlers. The popup gains React views `SendList`, `NewSend` and `SendCreated` under `entrypoints/popup/views/send/`, components `SendRow`, `ExpirySelect` and `MaxViewsInput`, and a `SendProvider` context with a `useSends` hook (ADR-004). Components talk to the background only through the `send.*` messages.
 - `wxt.config.ts` gains a `content_security_policy` with `'wasm-unsafe-eval'` for Chrome MV3 and the string form for Firefox MV2.
 - New dependency `hash-wasm` (Argon2id entry point about 30 KB minified with the WASM inlined). No new permissions.
 - Depends on ext-vault-browse for the popup shell, the item More menu hook and the API client, crypto helpers and clipboard helper from earlier changes in the chain.

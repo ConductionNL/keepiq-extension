@@ -17,14 +17,15 @@
 
 ## 3. Popup views
 
-- [ ] 3.1 Create `entrypoints/popup/views/item-form.ts`: Type select from cached `secret-types` with the default type, required Name, type-specific fields from `fields.ts`, Folder field opening the picker, Additional fields rows with per-row masking and the reserved, blank and duplicate refusals, Notes, and per-field cap messages.
+- [ ] 3.1 Create the hooks `entrypoints/popup/hooks/useItemDraft.ts` (draft state, dirty tracking, validation via `src/vault/fields.ts`, sparse patch against the fresh item) and `useUnsavedChangesGuard.ts` (the "You have unsaved changes. Discard them?" prompt on in-popup navigation while dirty).
+- [ ] 3.2 Create the components `TypeSelect.tsx`, `AdditionalFieldsEditor.tsx` (repeatable rows, per-row masking, reserved, blank and duplicate refusals), `ConfirmDialog.tsx` (in-popup dialog with a plain confirm, a two-choice cascade and a resolution-plan layout) and `FolderTree.tsx` under `entrypoints/popup/components/`.
+  - No component imports `src/api` or `src/crypto`; writes go through `useMessage` (ADR-004).
+- [ ] 3.3 Create `entrypoints/popup/views/ItemForm.tsx` composing `TypeSelect`, `TextField`, `MaskedField`, `AdditionalFieldsEditor`, `ErrorBanner` and `Button`: default type, required Name, type-specific fields, Folder field opening `FolderPicker`, Notes, per-field cap messages, the offline explanation disabling Save, and error banners with Retry that keep the typed values.
   - Passkey items show only Name, Folder and Website URL plus the read-only notice.
-- [ ] 3.2 Prefill Website URL from `browser.tabs.query({ active: true, currentWindow: true })` when adding from a tab, add Password reveal, and wire the generate button to ext-generator's pick mode returning the value into the draft; hide the button while that mode does not exist.
-- [ ] 3.3 Add the "+" button to the Vault tab list and make Edit, Clone, Move and Delete live on item detail: Edit and Clone call `item.fetch` first, Clone suffixes " - Clone" and excludes passkeys, Delete uses an in-popup confirm dialog, Move opens the picker and sends a `folderId`-only patch.
-- [ ] 3.4 Create `entrypoints/popup/views/folder-picker.ts`: "No folder", the indented tree, the current folder marked, and the inline "New folder" entry that calls `folder.create` and selects the result.
-- [ ] 3.5 Create `entrypoints/popup/views/folder-manager.ts` at Settings → Vault → Folders: tree, "Add folder" per level, rename, the empty and non-empty leaf delete dialogs, the subfolder resolution dialog fed by `folder.children`, and the dismissible plaintext-names notice stored in `storage.local`.
+- [ ] 3.4 Prefill Website URL from `browser.tabs.query({ active: true, currentWindow: true })` when adding from a tab, add Password reveal through `MaskedField`, and wire the generate button to ext-generator's pick mode returning the value into the draft; hide the button while that mode does not exist.
+- [ ] 3.5 Add the "+" button to the Vault tab list and make Edit, Clone, Move and Delete live on item detail: Edit and Clone call `item.fetch` first, Clone suffixes " - Clone" and excludes passkeys, Delete uses `ConfirmDialog`, Move opens `FolderPicker` and sends a `folderId`-only patch.
+- [ ] 3.6 Create `entrypoints/popup/views/FolderPicker.tsx` ("No folder", `FolderTree`, current folder marked, inline "New folder" calling `folder.create` and selecting the result) and `FolderManager.tsx` at Settings → Vault → Folders ("Add folder" per level, rename, the empty, cascade and resolution delete flows through `ConfirmDialog` fed by `folder.children`, the offline state, and the dismissible plaintext-names notice stored in `storage.local` via the background).
   - A 409 "resolution required" re-fetches children and opens the resolution dialog instead of failing.
-- [ ] 3.6 Add dirty tracking with the "You have unsaved changes. Discard them?" guard on in-popup navigation, the offline explanation that disables the write buttons, and the error banners with Retry that keep the typed values.
 
 ## 4. Verification
 

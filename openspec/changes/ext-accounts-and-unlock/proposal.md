@@ -58,9 +58,9 @@ All other typed shapes in the API client (`/api/v1/secrets`, `/api/v1/folders`, 
 
 ## Impact
 
-- New: `src/api/`, `src/crypto/`, `src/accounts/`, `src/vault/`, `entrypoints/popup/views/`.
-- Edited: `wxt.config.ts` (permissions), `src/messages.ts` (message unions), `entrypoints/background.ts` (message router, timeout engine), `entrypoints/popup/index.html`, `main.ts`, `popup.css`.
-- Unchanged: `entrypoints/content.ts`, `src/browser-action.ts`.
-- New dev dependency: `vitest` for the crypto module only.
+- New: `src/api/`, `src/crypto/`, `src/accounts/`, `src/vault/`, `entrypoints/popup/App.tsx`, `entrypoints/popup/views/`, `entrypoints/popup/components/`, `entrypoints/popup/hooks/`.
+- Edited: `wxt.config.ts` (permissions, React module), `eslint.config.mjs` (react-hooks rules), `src/messages.ts` (message unions), `entrypoints/background.ts` (message router, timeout engine), `entrypoints/popup/index.html`, `popup.css`. `entrypoints/popup/main.ts` becomes `main.tsx`.
+- Unchanged: `entrypoints/content.ts`, `src/browser-action.ts`; the background stays plain TypeScript.
+- New dependencies (ADR-004, added once here for the whole chain): `react`, `react-dom`, `@types/react`, `@types/react-dom`, `@wxt-dev/module-react`, `eslint-plugin-react-hooks`. New dev dependency `vitest` for the crypto module only.
 - Store review: optional host permissions for all origins are requested at runtime per server, which both stores accept more readily than a static `<all_urls>` host permission. The content script `matches` question stays open (CLAUDE.md).
 - Downstream: ext-vault-browse owns the `vaultCache.<accountId>` key named here and replaces the unlocked placeholder view. ext-settings owns the timeout option picker and PIN unlock; this change ships the engine and defaults they configure.

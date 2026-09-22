@@ -21,6 +21,10 @@ context: |
     additional_fields are RSA ciphertext; name, url, type and folder are plaintext. The server never decrypts.
     The extension decrypts client-side with WebCrypto, exactly like the Keepiq web app.
 
+  Popup UI: React with TypeScript through @wxt-dev/module-react (ADR-004). Components under entrypoints/popup/components/,
+    screens under entrypoints/popup/views/, hooks under entrypoints/popup/hooks/. The background owns state; components
+    talk to it only through the typed messages in src/messages.ts. Background and content scripts stay plain TypeScript.
+
   Repo conventions: browser.* never chrome.* (WXT-AND-BROWSERS.md), no global manifestVersion, version only in
     package.json, message payloads typed unknown at the boundary. Comments explain why, never what, and a file's
     comment block is shorter than its code (CLAUDE.md). Typecheck and lint are the only automated checks today.
@@ -41,6 +45,7 @@ rules:
     - Every extension API used must exist on both Chrome MV3 and Firefox MV2, or be shimmed
     - Key material lives in storage.session or memory only; ciphertext may live in storage.local
     - Runtime message kinds are dotted domain.action strings (accounts.list, item.decrypt), declared in src/messages.ts
+    - Popup code is React components and hooks (.tsx); no component imports src/api or src/crypto directly (ADR-004)
   tasks:
     - At most 20 top-level "- [ ]" lines; acceptance criteria are plain bullets
     - Every browser-facing task ends with building both targets, not only typecheck

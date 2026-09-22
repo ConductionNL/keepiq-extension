@@ -2,7 +2,7 @@
 
 The earlier chain members give the background an unlocked private key in `storage.session`, a ciphertext snapshot with plaintext `name`, `url`, `typeId`, `folderId` in `storage.local`, lazy decryption, the base-domain matcher `src/vault/match.ts`, the popup's "Autofill suggestions" section, the add form and the settings store (ADR-002). The content script is still the template scaffold. This change connects the vault to web pages the way Bitwarden's first-generation autofill does, and adds the save and update notification bar.
 
-Constraints: content scripts run in hostile pages and get one credential per fill (ADR-002, config rule). Every API must exist on Chrome MV3 and Firefox MV2 or be shimmed (WXT-AND-BROWSERS.md). Keepiq has no per-item match type and no last-used field (ADR-003).
+Constraints: content scripts run in hostile pages and get one credential per fill (ADR-002, config rule). Every API must exist on Chrome MV3 and Firefox MV2 or be shimmed (WXT-AND-BROWSERS.md). Keepiq has no per-item match type and no last-used field (ADR-003). The popup is React (ADR-004); background, content script, notification bar and offscreen document stay plain TypeScript.
 
 ## Goals / Non-Goals
 
@@ -33,15 +33,22 @@ Constraints: content scripts run in hostile pages and get one credential per fil
 - **Save shape.** `name` = page host, `url` = page origin, `typeId` = system `login` from the cached types, `login` and `key` encrypted with the cached certificate as in ext-vault-edit. Update re-fetches then `PUT` with `{ key }` only (ADR-002, ADR-003 sparse patch).
 - **Last used in `storage.local`.** `lastUsed[accountId][itemId] = epochMs`, written after a successful fill, read for ordering and for the shortcut. Cleared with the account.
 - **Content script `runAt: 'document_idle'` stays; capture listens with capture-phase `submit` and `click` on submit buttons plus `keydown` Enter in a password field, and `beforeunload` as a last chance.** Same as Bitwarden's collector. Reports once per submission using a per-form flag.
+- **React only in the popup (ADR-004).** The popup additions are props and hooks on existing components: `ItemCard` and `Suggestions` from ext-vault-browse get an `onFill` callback, `ItemDetail` gets a Fill button, the insecure-page confirmation reuses `ConfirmDialog` from ext-vault-edit, and a `useFill` hook wraps `fill.request` so no component touches `browser.tabs` or `src/api` directly. The notification bar injected into pages is NOT React: it is a small vanilla DOM bundle (`entrypoints/notification/main.ts`) loaded in the isolated iframe, because React must not run in content scripts or their injected UI and the bar is a handful of elements. The offscreen document is plain TypeScript for the same reason.
 - **Settings read through the ext-settings store**, keys as that change names them: URI match default, autofill on page load (off), ask to add login (on), ask to update existing login (on), excluded domains, clipboard clear delay, show context menu (on).
 
 ## Module layout
 
 - `entrypoints/content.ts`: replace the scaffold. Hosts the message listener for `fill.collect`, `fill.confirmInsecure`, `fill.execute`, `capture.show`, `capture.hide`; wires the capture collector; sends `page_ready` and `capture.submitted`.
 - `entrypoints/background.ts`: register the fill orchestrator, menu builder, `commands.onCommand`, capture queue and tab listeners; keep the single `onMessage` listener pattern with request/response and fire-and-forget arms.
-- `entrypoints/offscreen/index.html`, `entrypoints/offscreen/main.ts`: Chrome clipboard document.
-- `entrypoints/notification/index.html`, `entrypoints/notification/main.ts`, `entrypoints/notification/notification.css`: the bar UI.
-- `entrypoints/popup/*`: card click and Fill button call `fill.request`; insecure confirm; "Unable to autofill" toast; close on success.
+- `entrypoints/offscreen/index.html`, `entrypoints/offscreen/main.ts`: Chrome clipboard document, plain TypeScript.
+- `entrypoints/notification/index.html`, `entrypoints/notification/main.ts`, `entrypoints/notification/notification.css`: the bar UI, vanilla DOM, no React.
+- `entrypoints/popup/hooks/useFill.ts`: `useFill()` returns `fill(itemId)` that resolves the active tab through the background (`fill.request` carries `tabId` from `tabs.query` in the background arm when omitted), handles `needsInsecureConfirm` by opening `ConfirmDialog`, shows the toast and calls `window.close()` on success.
+- `entrypoints/popup/hooks/useActiveTab.ts`: `useActiveTab()` reads `{ url, fillable }` for the current tab through a `tabs.active` message so `Suggestions` can render "Autofill is not available on this page".
+- `entrypoints/popup/components/ItemCard.tsx` (ext-vault-browse): add `onFill?: (itemId: string) => void`; when set, the card click fills and a Fill button is rendered.
+- `entrypoints/popup/components/Suggestions.tsx` (ext-vault-browse): pass `onFill` from `useFill` to its cards.
+- `entrypoints/popup/views/ItemDetail.tsx` (ext-vault-browse): Fill button shown when the item matches the active tab, calling `useFill`.
+- `entrypoints/popup/components/ConfirmDialog.tsx` (ext-vault-edit): reused for the insecure-page warning; no new dialog component.
+- `entrypoints/popup/components/Toast.tsx` (ext-vault-browse): "Unable to autofill on this page. Copy and paste instead."
 - `src/autofill/matcher.ts`: `matches(itemUrl, pageUrl, rule)` for the six rules, on top of `src/vault/match.ts` and `tldts`; `candidatesFor(pageUrl, items, rule, lastUsed)`.
 - `src/autofill/fields.ts`: `findLoginFields(root)` with visibility and shadow DOM handling; `fillField(el, value)`.
 - `src/autofill/fill.ts`: background orchestrator (`collect`, insecure check, decrypt, dispatch, last-used write).
@@ -57,9 +64,12 @@ Constraints: content scripts run in hostile pages and get one credential per fil
 ## Message contract
 
 ```ts
-/** Popup, menu or command → background. Request/response. */
-type FillRequest = { kind: 'fill.request'; itemId: string; tabId: number; confirmedInsecure?: boolean }
+/** Popup, menu or command → background. Request/response. tabId omitted means the active tab. */
+type FillRequest = { kind: 'fill.request'; itemId: string; tabId?: number; confirmedInsecure?: boolean }
 type FillResult = { filled: 'both' | 'username' | 'password' | 'none'; needsInsecureConfirm?: boolean }
+
+/** Popup → background. Request/response. Lets the popup render the not-available state without `tabs` access. */
+type TabsActive = { kind: 'tabs.active' }   // reply: { url: string | null; fillable: boolean }
 
 /** Background → every frame of a tab. Request/response. */
 type FillCollect = { kind: 'fill.collect' }
@@ -87,7 +97,7 @@ type CaptureDismiss = { kind: 'capture.dismiss'; never: boolean }
 type ClipboardWrite = { kind: 'clipboard.write'; text: string }
 ```
 
-`ContentToBackground` gains `CaptureSubmitted`; `BackgroundToContent` gains `FillCollect`, `FillConfirmInsecure`, `FillExecute`, `CaptureShow`, `CaptureHide`; `PopupToBackground` gains `FillRequest`; new unions `NotificationToBackground` and `BackgroundToOffscreen`. Every listener keeps the `unknown` cast at the boundary.
+`ContentToBackground` gains `CaptureSubmitted`; `BackgroundToContent` gains `FillCollect`, `FillConfirmInsecure`, `FillExecute`, `CaptureShow`, `CaptureHide`; `PopupToBackground` gains `FillRequest` and `TabsActive`; new unions `NotificationToBackground` and `BackgroundToOffscreen`. Every listener keeps the `unknown` cast at the boundary.
 
 ## Risks / Trade-offs
 

@@ -69,8 +69,9 @@ All from ADR-003.
 
 ## Impact
 
-- New: `src/vault/write.ts`, `src/vault/fields.ts`, popup views `item-form`, `folder-picker`, `folder-manager`.
-- Edited: `src/messages.ts` (write messages), `entrypoints/background.ts` (write handlers), the popup vault list and item detail from ext-vault-browse (the "+" button and the enabled actions).
+- New: `src/vault/write.ts`, `src/vault/fields.ts`; React views `ItemForm`, `FolderPicker`, `FolderManager` under `entrypoints/popup/views/`; components `TypeSelect`, `AdditionalFieldsEditor`, `ConfirmDialog`, `FolderTree` under `entrypoints/popup/components/`; hooks `useItemDraft`, `useUnsavedChangesGuard` under `entrypoints/popup/hooks/` (ADR-004).
+- Reused: `MaskedField`, `TextField`, `Button`, `ErrorBanner` and `useMessage` from ext-vault-browse and ext-accounts-and-unlock.
+- Edited: `src/messages.ts` (write messages), `entrypoints/background.ts` (write handlers), the vault list and item detail views from ext-vault-browse (the "+" button and the enabled actions).
 - Depends on the API client and `src/crypto/` from ext-accounts-and-unlock and on sync, cached `secret-types`, the vault list and item detail from ext-vault-browse.
 - The generate button depends on ext-generator's "pick a password" mode; until that change lands the button is hidden.
 - No new manifest permissions. The current-tab URL prefill uses the `tabs` permission ext-vault-browse already needs for URL matching.

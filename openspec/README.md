@@ -5,7 +5,7 @@ Specs and architecture decisions for the Keepiq browser extension. Workflow: the
 | Path | Purpose |
 | --- | --- |
 | `config.yaml` | Project context and per-artifact rules the skills load |
-| `architecture/adr-*.md` | Repo decisions. ADR-001 Bitwarden parity, ADR-002 key lifetime and caching, ADR-003 the Keepiq API contract |
+| `architecture/adr-*.md` | Repo decisions. ADR-001 Bitwarden parity, ADR-002 key lifetime and caching, ADR-003 the Keepiq API contract, ADR-004 React popup |
 | `changes/<name>/` | One change per feature slice: proposal, specs, design, tasks |
 | `specs/` | Main specs, filled by `/opsx-sync` or `/opsx-archive` from a change's delta specs |
 

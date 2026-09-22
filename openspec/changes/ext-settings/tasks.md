@@ -17,21 +17,24 @@
 
 - [ ] 3.1 Create `src/settings/pin.ts`: PBKDF2-SHA256 600 000 iterations with a random 16-byte salt, AES-256-GCM wrap of the PKCS#8 bytes, envelope codec, and a placement helper choosing `storage.session`, `storage.local` or the Firefox memory fallback
 - [ ] 3.2 Implement `pin.enable`, `pin.disable` and `pin.unlock` in the background with the attempt counter stored beside the blob, purge of blob and counter on lock, timeout, logout, account removal, suite change and the fifth wrong PIN
-- [ ] 3.3 Add the PIN field and "Use master password" link to the unlock view from ext-accounts-and-unlock, shown only when the snapshot reports a PIN, with the "PIN disabled after too many attempts" state
+- [ ] 3.3 Change ext-accounts-and-unlock's `Unlock` view component (`entrypoints/popup/views/Unlock.tsx`) to render a PIN field and "Use master password" link when `useSettings` reports `pin.enabled`, sending `pin.unlock`, with the "PIN disabled after too many attempts" state
 
 ## 4. Server-mirrored preferences
 
 - [ ] 4.1 Create `src/settings/server-mirror.ts` for `GET/PUT /api/settings/user`: string encoding of toggles, cache with `fetchedAt` in the account record, stale computation, refresh at the end of the ext-vault-browse sync and on Sync now, online-only writes that store the echoed set
 
-## 5. Popup views
+## 5. Popup components, hooks and views
 
-- [ ] 5.1 Create `entrypoints/popup/views/settings/index.ts` with the six-section list, per-section navigation and back control, wired into the Settings tab of the popup shell
-- [ ] 5.2 Create `account-security.ts`: timeout options with Custom entry and policy-aware hiding, Never warning with confirmation, action with Log out note, Lock now, Log out with confirmation, PIN toggle and dialog, biometrics disabled, Change master password link, `session_timeout` shown read-only as "Web app default"
-- [ ] 5.3 Create `autofill.ts`: the five entries with their warnings and notes, the inline-menu "Coming later" state from `capabilities.inlineMenu`, shortcut display from `browser.commands.getAll()` with the Chromium link and the Firefox instructions, clear clipboard options
-- [ ] 5.4 Create `notifications.ts`: Ask to add, Ask to update, Excluded domains with Add current site via `activeTab`, free-text add, duplicate and empty rejection, remove; the Keepiq server notifications subsection with stale indicator, disabled-offline and revert-on-error behaviour
-- [ ] 5.5 Create `vault.ts`: Sync now with Last sync and the offline failure message, Folders entry opening the ext-vault-edit folder manager, Import and Export links to the web app, Default item type from cached types with the `login` fallback and note
-- [ ] 5.6 Create `appearance.ts` and extend `entrypoints/popup/popup.css`: theme applied via `data-theme` before first paint, compact mode tokens, show animations class, quick copy actions toggle, read-only Language line
-- [ ] 5.7 Create `about.ts`: version from the manifest, server origin, Help, Report a bug, Privacy policy, Keepiq web app links, Rate the extension hidden while the store constant is `<store-url>`
+- [ ] 5.1 Create the shared components under `entrypoints/popup/components/`: `SettingRow.tsx` (label, description, control slot), `Toggle.tsx`, `Select.tsx`, `SectionList.tsx`, `PinDialog.tsx`, `WarningDialog.tsx`
+  - No component imports `src/api` or `src/crypto` (ADR-004)
+- [ ] 5.2 Create the hooks under `entrypoints/popup/hooks/`: `useSettings.ts` over `settings.get` and `settings.set` with `applyPolicy` applied to the returned values, `useServerSettings.ts` with the stale indicator and disabled-offline state over `settings.server.set`, `useTheme.ts` applying the global theme to the document root from `<App />` so unlock and account screens are themed
+- [ ] 5.3 Create `entrypoints/popup/views/settings/SettingsIndex.tsx` with the six-section `SectionList`, per-section navigation and back control, wired into the Settings tab of the popup shell
+- [ ] 5.4 Create `AccountSecurity.tsx`: timeout options with Custom entry and policy-aware hiding, Never `WarningDialog`, action with Log out note, Lock now, Log out with confirmation, PIN toggle with `PinDialog` and the on-disk `WarningDialog`, biometrics disabled, Change master password link, `session_timeout` shown read-only as "Web app default"
+- [ ] 5.5 Create `Autofill.tsx`: the five entries with their warnings and notes, the inline-menu "Coming later" state from `capabilities.inlineMenu`, shortcut display from the snapshot's `shortcut` with the Chromium link and the Firefox instructions, clear clipboard options
+- [ ] 5.6 Create `Notifications.tsx`: Ask to add, Ask to update, Excluded domains with Add current site via `activeTab`, free-text add, duplicate and empty rejection, remove; the Keepiq server notifications subsection driven by `useServerSettings` with revert-on-error behaviour
+- [ ] 5.7 Create `Vault.tsx`: Sync now with Last sync and the offline failure message, Folders entry opening the ext-vault-edit folder manager, Import and Export links to the web app, Default item type from cached types with the `login` fallback and note
+- [ ] 5.8 Create `Appearance.tsx` and extend `entrypoints/popup/popup.css`: theme tokens under `[data-theme]`, compact mode tokens, show animations class, quick copy actions toggle, read-only Language line
+- [ ] 5.9 Create `About.tsx`: version and server origin from `about.get`, Help, Report a bug, Privacy policy, Keepiq web app links, Rate the extension hidden while the store constant is `<store-url>`
 
 ## 6. Verification
 

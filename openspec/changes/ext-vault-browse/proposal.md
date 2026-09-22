@@ -67,8 +67,8 @@ All from ADR-003, relative to `https://<host>/index.php/apps/keepiq`:
 
 ## Impact
 
-- New modules: `src/vault/types.ts`, `src/vault/store.ts`, `src/vault/sync.ts`, `src/vault/match.ts`, `src/totp/totp.ts`, `src/clipboard.ts`, `entrypoints/popup/views/*`, `entrypoints/offscreen/` (Chrome only).
-- Edited: `entrypoints/background.ts` (message arms, alarms, sync triggers), `entrypoints/popup/index.html`, `entrypoints/popup/main.ts`, `entrypoints/popup/popup.css`, `src/messages.ts`, `wxt.config.ts` (permissions).
-- Depends on ext-accounts-and-unlock for the account store, unlock state, `src/api/client.ts` and `src/crypto/`.
+- New modules: `src/vault/types.ts`, `src/vault/store.ts`, `src/vault/sync.ts`, `src/vault/match.ts`, `src/totp/totp.ts`, `src/clipboard.ts`, `entrypoints/offscreen/` (Chrome only); React views `Shell`, `VaultList`, `ItemDetail`, `Placeholder` under `entrypoints/popup/views/`, components `TabBar`, `SearchField`, `FolderSelect`, `TypeFilterChips`, `ItemCard`, `Menu`, `MaskedField`, `TotpCode`, `Banner`, `EmptyState` under `entrypoints/popup/components/`, hooks `useVaultSnapshot`, `useDecryptedFields`, `useCurrentTab`, `useClipboard` under `entrypoints/popup/hooks/` (ADR-004).
+- Edited: `entrypoints/background.ts` (message arms, alarms, sync triggers), `entrypoints/popup/App.tsx` and the `Header` component from ext-accounts-and-unlock, `entrypoints/popup/popup.css`, `src/messages.ts`, `wxt.config.ts` (permissions).
+- Depends on ext-accounts-and-unlock for the account store, unlock state, `src/api/client.ts`, `src/crypto/`, the React setup (`main.tsx`, `App.tsx`, `useMessage`, `usePopupState`) and the `Header`, `Button`, `TextField` and `ErrorBanner` components.
 - New dependency: `tldts` for public-suffix-aware base domain extraction (bundled list, no network). Optional dev dependency `vitest` for the pure modules.
 - Unblocks ext-vault-edit (wires Edit, Clone, Move, Delete), ext-autofill (Fill button, `src/vault/match.ts`), ext-generator, ext-send and ext-settings (tab content, theme switch, clipboard-clear and website-icon settings).

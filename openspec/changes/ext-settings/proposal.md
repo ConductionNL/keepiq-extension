@@ -59,8 +59,8 @@ Sync now reuses the sync routine from ext-vault-browse and adds no calls of its 
 
 ## Impact
 
-- New: `src/settings/schema.ts`, `src/settings/store.ts`, `src/settings/policy.ts`, `src/settings/pin.ts`, `src/settings/server-mirror.ts`, `entrypoints/popup/views/settings/*`.
-- Edited: `src/messages.ts` (settings, PIN and About message kinds), `entrypoints/background.ts` (handlers, timeout config fed from settings, PIN unlock, clearing the PIN blob on lock and logout), the unlock view from ext-accounts-and-unlock (PIN field), `entrypoints/popup/popup.css` (theme tokens, compact mode).
+- New: `src/settings/schema.ts`, `src/settings/store.ts`, `src/settings/policy.ts`, `src/settings/pin.ts`, `src/settings/server-mirror.ts`; React views `entrypoints/popup/views/settings/{SettingsIndex,AccountSecurity,Autofill,Notifications,Vault,Appearance,About}.tsx`; components `entrypoints/popup/components/{SettingRow,Toggle,Select,SectionList,PinDialog,WarningDialog}.tsx`; hooks `entrypoints/popup/hooks/{useSettings,useServerSettings,useTheme}.ts` (ADR-004).
+- Edited: `src/messages.ts` (settings, PIN and About message kinds), `entrypoints/background.ts` (handlers, timeout config fed from settings, PIN unlock, clearing the PIN blob on lock and logout), ext-accounts-and-unlock's `Unlock` view component (PIN field and "Use master password" link), `entrypoints/popup/popup.css` (theme tokens, compact mode).
 - Other changes in the chain read their knobs through `settings.get` instead of their own keys: ext-accounts-and-unlock (timeout, action), ext-vault-browse (clipboard clear, quick copy actions), ext-vault-edit (default item type), ext-autofill (every Autofill and Notifications entry).
 - No new manifest permissions. The `commands` entry the shortcut display reads is declared by ext-autofill.
 - Security: a PIN-wrapped copy of the private key can live in `storage.local`. Design.md states the trade-off and the mitigations.

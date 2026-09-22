@@ -31,7 +31,7 @@ Constraints that shape the design: the background is the only place with host pe
 - **Timeout policy is one constant object** (`TIMEOUT_POLICY = { maxMinutes, forcedAction }` in `src/vault/timeout.ts`) so an admin clamp later touches one place (ADR-002).
 - **"Never" writes the same PKCS#8 base64 to `storage.local` under `neverLockKey.<accountId>`** and the key store reads it back after a restart. Every lock path deletes it. Alternative: refuse "Never", rejected for Bitwarden parity.
 - **Errors cross the message boundary as a discriminated `code`, not as thrown errors.** Every request/response message resolves to `{ ok: true, state } | { ok: false, code, message }` so the popup can map codes to copy and `sendMessage` never rejects on a domain error.
-- **Popup stays vanilla TypeScript, split into view modules under `entrypoints/popup/views/`.** Each view exports `render(root, state, send)`; `main.ts` picks the view from `state.screen`. A framework is an open question for a later change; the message contract does not depend on it.
+- **The popup is React with TypeScript through `@wxt-dev/module-react` (ADR-004).** `main.tsx` mounts `<App />`, which picks a view from `state.screen`; views compose components, and hooks are the only bridge to the background (`useMessage` wraps `browser.runtime.sendMessage` with the typed envelopes, `usePopupState` holds the background-owned `PopupState`). No component imports `src/api` or `src/crypto`, and the background and content scripts stay plain TypeScript. This change lands the dependencies once for the whole chain. Alternative: the template's vanilla view modules, rejected by ADR-004 because shared stateful components across seven changes need one component model.
 - **Scaffold toggle removed.** `get_state`, `set_enabled`, `enabled_changed` and the badge counter go; `page_ready` stays for ext-autofill. Keeping dead UI in the real popup costs more than the scaffold is worth.
 - **Crypto tests use vitest, the one automated test in the repo.** Envelope layout, chunk framing and round trips are cheap to test and expensive to debug against a live server.
 
@@ -49,16 +49,21 @@ New:
 - `src/vault/key-store.ts`: session or memory backend, re-import, `neverLockKey` handling.
 - `src/vault/unlock.ts`: `unlock(accountId, method)`, suite fetch when uncached, epoch check, `lock`, `lockAll`, `logoutForTimeout`.
 - `src/vault/timeout.ts`: settings defaults, `TIMEOUT_POLICY`, alarm, idle listener, popup port tracking.
-- `entrypoints/popup/request.ts`: typed `send()` wrapper and the interaction port.
-- `entrypoints/popup/views/add-account.ts` (also renders the "Log in again" mode), `unlock.ts`, `account-switcher.ts`, `unlocked.ts` (placeholder with identity and Lock, replaced by ext-vault-browse).
+- `entrypoints/popup/main.tsx`: mounts `<App />` and opens the `popup` interaction port.
+- `entrypoints/popup/App.tsx`: reads `usePopupState()` and renders the view for `state.screen` inside the `Header`.
+- `entrypoints/popup/hooks/useMessage.ts`: typed wrapper around `browser.runtime.sendMessage` for `PopupToBackground`, resolving to `Result`; the single `unknown` cast in the popup.
+- `entrypoints/popup/hooks/usePopupState.ts`: fetches `vault.status` on mount, exposes `state`, `refresh()` and `dispatch(message)` that replaces the state with the returned one.
+- `entrypoints/popup/components/Header.tsx` (title, avatar slot opening the switcher), `Button.tsx`, `TextField.tsx` (label, error, show/hide toggle for `type="password"`), `ErrorBanner.tsx`, `Avatar.tsx` (data URL or initials disc).
+- `entrypoints/popup/views/AddAccount.tsx`, `LogInAgain.tsx`, `Unlock.tsx`, `AccountSwitcher.tsx`, `Unlocked.tsx` (placeholder with identity and Lock, replaced by ext-vault-browse).
 
 Edited:
 
-- `wxt.config.ts`: `permissions` add `alarms`, `idle`; `optional_host_permissions` (Chrome) or `optional_permissions` (Firefox) for `https://*/*` and `http://*/*`; `strict_min_version` stays `109.0`.
+- `wxt.config.ts`: `modules: ['@wxt-dev/module-react']`; `permissions` add `alarms`, `idle`; `optional_host_permissions` (Chrome) or `optional_permissions` (Firefox) for `https://*/*` and `http://*/*`; `strict_min_version` stays `109.0`.
+- `eslint.config.mjs`: `eslint-plugin-react-hooks` recommended rules for `entrypoints/**/*.tsx`.
 - `src/messages.ts`: new unions and state types below; scaffold messages removed.
 - `entrypoints/background.ts`: message router, alarm and idle listeners, port listener, `onUnauthorized` wiring.
-- `entrypoints/popup/index.html`, `main.ts`, `popup.css`: header with avatar slot, view root, styles for forms, list rows and the switcher panel.
-- `package.json`: `vitest` dev dependency and a `test` script.
+- `entrypoints/popup/index.html` (a single `#root` and the `main.tsx` script), `popup.css` (styles for form fields, buttons, avatar disc, list rows, switcher panel and error text, same token approach). `main.ts` is deleted in favour of `main.tsx`.
+- `package.json`: `react`, `react-dom` dependencies; `@types/react`, `@types/react-dom`, `@wxt-dev/module-react`, `eslint-plugin-react-hooks`, `vitest` dev dependencies; a `test` script.
 
 ## Message contract
 
@@ -123,7 +128,7 @@ Storage keys in `storage.local`: `accounts` (record by id), `activeAccountId`, `
 ## Risks / Trade-offs
 
 - [Raw PKCS#8 bytes sit in `storage.session`] → Accepted per ADR-002; `setAccessLevel` is left at its default so content scripts cannot read it, and every lock path deletes the key.
-- [`permissions.request` from the popup closes the popup on some Chrome versions] → The form values live in the popup only; the flow re-renders from `PopupState`, and the user retries with values preserved by `sessionStorage` in the popup for the lifetime of the browser session.
+- [`permissions.request` from the popup closes the popup on some Chrome versions] → The form values are React state in `AddAccount`; they are mirrored to the popup's `sessionStorage` on change so a reopened popup restores them for the retry.
 - [PBKDF2 at 600 000 iterations takes about half a second] → Unlock button shows a busy state; short default timeouts are avoided (ADR-002).
 - [A 1 minute alarm can leave a vault unlocked up to 59 seconds past its timeout] → `vault.status` re-checks on every popup open, so the popup never renders an expired session.
 - [Nextcloud returns HTML for unknown routes] → The client treats a 404 without a JSON `message` on a Keepiq route as `KeepiqNotInstalled` and everything else as `ApiError`.
@@ -133,7 +138,6 @@ Storage keys in `storage.local`: `accounts` (record by id), `activeAccountId`, `
 
 ## Open Questions
 
-- Whether the popup adopts a framework in a later change; the view-module split keeps that door open.
 - Whether the `http` allow list (`localhost`, `127.0.0.1`, `*.test`, `*.local`) should be a build-time setting instead of a code constant.
 - Whether "On system lock" stays in the option list; Bitwarden offers it and `browser.idle` makes it cheap, but ADR-002's list omits it.
 - Whether a "Logged out" account should expire and be removed automatically after some time, as Bitwarden does not.

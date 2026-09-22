@@ -30,7 +30,8 @@ ext-vault-browse leaves the vault read-only: sync fills `storage.local` with cip
 - **Folder delete follows Keepiq's three modes.** Empty: plain `DELETE`. Non-empty leaf: `?cascade=delete|move`. With subfolders: `GET /children` then a `DELETE` with the resolution body (`FolderController::destroy` reads `subfolders` and `directSecrets` from the body). The picker and manager decide the mode from the cached rows, the server's 409 is the fallback when the cache is behind.
 - **After every successful write, run the ext-vault-browse sync instead of merging the response row.** ADR-002 says sync runs after every local write and the manifest replaces the snapshot atomically; merging one row would need a second code path for the same state.
 - **`default_secret_type` is fetched with `GET /api/settings/user` during sync and cached in `storage.local` with the account.** ext-settings later reuses the same cache. Alternative: wait for ext-settings; rejected because the add form needs a default now.
-- **Confirm and resolution dialogs are in-popup elements, never `window.confirm`.** Firefox closes an extension popup when a native dialog opens; a DOM dialog behaves the same in both browsers.
+- **Confirm and resolution dialogs are the `ConfirmDialog` React component, never `window.confirm`.** Firefox closes an extension popup when a native dialog opens; an in-popup component behaves the same in both browsers.
+- **The popup is React per ADR-004.** Views compose components, components read state and trigger writes only through hooks that wrap the typed messages; no component imports `src/api` or `src/crypto`, so the encryption boundary stays in the background. Draft state, dirty tracking and validation live in `useItemDraft`, which calls `src/vault/fields.ts` (pure logic, allowed).
 - **Offline is derived from the last request outcome, reported by the background in the vault state.** `navigator.onLine` is unreliable in a service worker and says nothing about the Keepiq host.
 
 ## Module layout
@@ -39,11 +40,19 @@ ext-vault-browse leaves the vault read-only: sync fills `storage.local` with cip
 - `src/vault/write.ts` (new): encrypt a draft or patch with the suite certificate via `src/crypto/`, call the API client for secrets and folders, map status codes to `VaultWriteError`, trigger sync.
 - `src/messages.ts` (edit): the write messages below and `online` on the vault state.
 - `entrypoints/background.ts` (edit): request/response arms for the write messages, returning the Promise as the existing `get_state` arm does.
-- `entrypoints/popup/views/item-form.ts` (new): add, edit and clone form, dirty tracking, unsaved-changes guard.
-- `entrypoints/popup/views/folder-picker.ts` (new): tree list with "No folder" and "New folder".
-- `entrypoints/popup/views/folder-manager.ts` (new): tree, create, rename, delete and the two delete dialogs.
-- Popup vault list and item detail from ext-vault-browse (edit): the "+" button and the live Edit, Delete, Clone and Move actions.
-- `entrypoints/popup/popup.css` (edit): form, row and dialog styles.
+- `entrypoints/popup/views/ItemForm.tsx` (new): add, edit and clone screen composed from the components below.
+- `entrypoints/popup/views/FolderPicker.tsx` (new): "No folder", `FolderTree`, current folder marked, inline "New folder".
+- `entrypoints/popup/views/FolderManager.tsx` (new): `FolderTree` with create, rename, delete and the two delete dialogs.
+- `entrypoints/popup/components/TypeSelect.tsx` (new): type select over the cached `secret-types`.
+- `entrypoints/popup/components/AdditionalFieldsEditor.tsx` (new): repeatable name and value rows with per-row masking and the reserved, blank and duplicate refusals.
+- `entrypoints/popup/components/ConfirmDialog.tsx` (new): in-popup dialog for delete confirms, the cascade choice and the subfolder resolution plan.
+- `entrypoints/popup/components/FolderTree.tsx` (new): indented tree by `parentId`, shared by picker and manager.
+- Reused from ext-vault-browse and ext-accounts-and-unlock: `MaskedField`, `TextField`, `Button`, `ErrorBanner`.
+- `entrypoints/popup/hooks/useItemDraft.ts` (new): draft state, dirty tracking, validation via `src/vault/fields.ts`, patch computation against the fresh item.
+- `entrypoints/popup/hooks/useUnsavedChangesGuard.ts` (new): the discard prompt on in-popup navigation while a draft is dirty.
+- Write messages are sent through the `useMessage` hook from ext-accounts-and-unlock; no component imports `src/api` or `src/crypto`.
+- Vault list and item detail views from ext-vault-browse (edit): the "+" button and the live Edit, Delete, Clone and Move actions.
+- `entrypoints/popup/popup.css` (edit): form, row and dialog styles, split per component when a file grows.
 
 ## Message contract
 

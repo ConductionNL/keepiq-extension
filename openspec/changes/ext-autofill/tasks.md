@@ -20,20 +20,21 @@
 - [ ] 3.2 Rewrite `entrypoints/content.ts`: answer `fill.collect`, `fill.confirmInsecure` (window.confirm with Bitwarden's wording) and `fill.execute`; drop the credential after writing; keep the context-invalidated latch and `page_ready`
 - [ ] 3.3 Write `src/autofill/fill.ts` and wire `fill.request` in `entrypoints/background.ts`: verify sender, collect frames, select top frame plus frames whose `sender.url` matches, insecure check, decrypt `login` and `key`, send `fill.execute` per frame, record last used, return `FillResult`
   - Plaintext is held only inside the handler; cross-origin non-matching frames receive nothing
-- [ ] 3.4 Popup: suggestion card click and detail Fill button call `fill.request` for the active tab; show the insecure confirmation and the "Unable to autofill on this page" toast; close the popup on success; show "Autofill is not available on this page" for non-http tabs
+- [ ] 3.4 Popup (React, ADR-004): add `entrypoints/popup/hooks/useFill.ts` and `useActiveTab.ts`, an `onFill` prop on `ItemCard.tsx` and `Suggestions.tsx`, a Fill button in `views/ItemDetail.tsx`, the insecure warning through the existing `ConfirmDialog.tsx`, the "Unable to autofill on this page" toast, `window.close()` on success, and the "Autofill is not available on this page" state via the `tabs.active` message
+  - No component imports `src/api` or `src/crypto`; all calls go through `src/messages.ts` kinds
 - [ ] 3.5 Fill on page load: on `page_ready` from a top frame, when the setting is on and the vault is unlocked, fill the single candidate or the last-used one, otherwise do nothing
 
 ## 4. Context menu, shortcut, clipboard
 
 - [ ] 4.1 Write `src/menus.ts`: build the "Keepiq" menu on `editable` contexts (Autofill submenu capped at 10 plus "Open Keepiq", "No matching logins", Copy username, Copy password, Generate password and copy, "Unlock vault" when locked); rebuild on install, tab activation, active tab URL change, lock change and sync; honour the show-context-menu setting
 - [ ] 4.2 Handle `commands.onCommand` for `autofill_login`: fill the last used or single candidate, else open the popup; add `openPopupOrPopout()` to `src/browser-action.ts` with the `windows.create` fallback
-- [ ] 4.3 Add `entrypoints/offscreen/` and `writeFromBackground()` in `src/clipboard.ts`: offscreen document on Chrome guarded by `browser.offscreen`, direct `navigator.clipboard` on Firefox, clear via `browser.alarms` after the settings delay only if the clipboard still holds the value
+- [ ] 4.3 Add `entrypoints/offscreen/` (plain TypeScript, no React) and `writeFromBackground()` in `src/clipboard.ts`: offscreen document on Chrome guarded by `browser.offscreen`, direct `navigator.clipboard` on Firefox, clear via `browser.alarms` after the settings delay only if the clipboard still holds the value
 
 ## 5. Login capture
 
 - [ ] 5.1 Write `src/autofill/capture-collector.ts` and wire it in `entrypoints/content.ts`: detect submit, submit-button click, Enter in a password field and `beforeunload`; report `capture.submitted` once per submission with `changed` for password change forms; skip empty passwords
 - [ ] 5.2 Write `src/autofill/capture-queue.ts` in the background: verify sender, drop when locked or excluded or the ask settings are off, compare against decrypted `login` and `key` of matching items to pick add, update or nothing, hold the entry in memory keyed by tab id with a five minute expiry, drop on tab close and lock, show on `tabs.onUpdated` complete within the same base domain, hide on leaving it
-- [ ] 5.3 Add `entrypoints/notification/` (bar UI) and `src/autofill/notification-host.ts` (iframe in a closed shadow root, fixed at the top of the page): the bar loads its state with `capture.state`, renders add and update modes, folder dropdown, Save, Update, Never for this site, close, and the saved and error states
+- [ ] 5.3 Add `entrypoints/notification/` (bar UI as a vanilla DOM bundle, no React, per ADR-004) and `src/autofill/notification-host.ts` (iframe in a closed shadow root, fixed at the top of the page): the bar loads its state with `capture.state`, renders add and update modes, folder dropdown, Save, Update, Never for this site, close, and the saved and error states
   - Bar never receives the password; `capture.*` decisions are accepted only from the extension origin sender
 - [ ] 5.4 Implement `capture.save` (encrypt, `POST /api/v1/secrets` with host name, origin url, `login` type, folder, then sync), `capture.update` (`GET` then `PUT /api/v1/secrets/{id}` with only `key`, 404 falls back to add), and `capture.dismiss` with `never` appending the base domain to excluded domains
 

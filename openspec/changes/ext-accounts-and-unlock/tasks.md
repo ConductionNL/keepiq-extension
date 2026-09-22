@@ -3,7 +3,9 @@
 - [ ] 1.1 Edit `wxt.config.ts`: add `alarms` and `idle` to `permissions`; add `optional_host_permissions: ['https://*/*', 'http://*/*']` for Chrome and the same patterns under `optional_permissions` for Firefox by branching on the `browser` argument; leave `strict_min_version` at `109.0` and `manifestVersion` unset.
   - Both generated manifests contain the two permissions and the optional origin patterns in the right key.
 - [ ] 1.2 Rewrite `src/messages.ts` to the contract in design.md (`AccountSummary`, `PopupState`, `ErrorCode`, `Result`, the new `PopupToBackground` arms) and remove `get_state`, `set_enabled`, `enabled_changed` and the old `PopupState`; keep `ContentToBackground` with `page_ready`.
-  - `npm run typecheck` fails only in `background.ts` and `popup/main.ts`, which later tasks rewrite.
+  - `npm run typecheck` fails only in `background.ts` and `popup/main.ts`, which later tasks rewrite or delete.
+- [ ] 1.3 Install `react` and `react-dom` as dependencies and `@types/react`, `@types/react-dom`, `@wxt-dev/module-react`, `eslint-plugin-react-hooks` as dev dependencies; add `modules: ['@wxt-dev/module-react']` to `wxt.config.ts`; extend `eslint.config.mjs` with the react-hooks recommended rules for `entrypoints/**/*.tsx` (ADR-004).
+  - `npm run build` succeeds with an empty `main.tsx` and `.output/chrome-mv3/` contains the React chunk.
 
 ## 2. Crypto module
 
@@ -38,10 +40,11 @@
 
 ## 6. Popup
 
-- [ ] 6.1 Rewrite `entrypoints/popup/index.html` and `main.ts`: header with title and avatar slot, a view root, `request.ts` with the typed `send()` wrapper and the `popup` port, `main.ts` requesting `vault.status` and rendering the view for `state.screen`; create `views/add-account.ts` covering both the add and "Log in again" modes, with the security settings link, `browser.permissions.request` in the click handler, code to message mapping and preserved field values on error.
-- [ ] 6.2 Create `views/unlock.ts` (identity, masked field with show/hide, busy state on Unlock, "Log out" link that calls `accounts.remove`, "Invalid master password" and offline errors) and `views/unlocked.ts` (identity, Lock button, note that ext-vault-browse replaces this view).
-- [ ] 6.3 Create `views/account-switcher.ts`: panel opened from the header avatar listing accounts with avatar or initials, display name, host, status label, active marker, per-account Lock and Log out, Lock all, Log out all with confirmation, Add account disabled at 5 with the limit hint.
-- [ ] 6.4 Extend `entrypoints/popup/popup.css` for form fields, the avatar disc, list rows, the switcher panel and error text; keep `color-scheme: light dark` and the 280 px width or widen to 320 px if the switcher rows need it.
+- [ ] 6.1 Replace `entrypoints/popup/main.ts` with `main.tsx` (mount `<App />`, open the `popup` port), reduce `index.html` to a `#root`, and create `App.tsx`, `hooks/useMessage.ts` (typed `browser.runtime.sendMessage` wrapper resolving to `Result`, the popup's only `unknown` cast) and `hooks/usePopupState.ts` (`vault.status` on mount, `state`, `refresh`, `dispatch`); `App` renders the view for `state.screen`.
+  - No file under `entrypoints/popup/` imports `src/api` or `src/crypto`.
+- [ ] 6.2 Create `components/Header.tsx` (title, avatar slot that opens the switcher), `Avatar.tsx` (data URL or initials disc), `Button.tsx` (busy state), `TextField.tsx` (label, error, show/hide toggle for passwords) and `ErrorBanner.tsx`.
+- [ ] 6.3 Create `views/AddAccount.tsx` (three fields, security settings link, `browser.permissions.request` in the submit handler, `ErrorCode` to copy mapping, field values mirrored to `sessionStorage` for the retry) and `views/LogInAgain.tsx` (identity plus one App password field, "Session revoked" banner, "Log out" link calling `accounts.remove`).
+- [ ] 6.4 Create `views/Unlock.tsx` (identity, `TextField` for the master password, busy Unlock, "Log out" link, "Invalid master password" and offline errors), `views/Unlocked.tsx` (identity and Lock; replaced by ext-vault-browse) and `views/AccountSwitcher.tsx` (rows with `Avatar`, display name, host, status label, active marker, per-account Lock and Log out, Lock all, Log out all with confirmation, Add account disabled at 5 with the limit hint); extend `popup.css` for these, keeping `color-scheme: light dark` and widening from 280 px to 320 px if the rows need it.
 
 ## 7. Verification
 

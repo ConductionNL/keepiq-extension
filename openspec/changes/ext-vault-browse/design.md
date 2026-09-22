@@ -1,6 +1,6 @@
 ## Context
 
-ext-accounts-and-unlock leaves the extension able to authenticate (`src/api/client.ts`), derive and hold the private key per ADR-002, and decrypt fields (`src/crypto/`). This change adds the first thing a user sees after unlocking: a cached, browsable, read-only vault inside a Bitwarden-style popup. The template's split is kept: the background owns state and every `browser.*` API the popup cannot reach, the popup is a fresh stateless document each time it opens, and every envelope crossing a runtime boundary is typed in `src/messages.ts` and asserted from `unknown` at the listener (WXT-AND-BROWSERS.md § 3).
+ext-accounts-and-unlock leaves the extension able to authenticate (`src/api/client.ts`), derive and hold the private key per ADR-002, and decrypt fields (`src/crypto/`). This change adds the first thing a user sees after unlocking: a cached, browsable, read-only vault inside a Bitwarden-style popup. The template's split is kept: the background owns state and every `browser.*` API the popup cannot reach, the popup is a fresh stateless React document each time it opens (ADR-004), and every envelope crossing a runtime boundary is typed in `src/messages.ts` and asserted from `unknown` at the listener (WXT-AND-BROWSERS.md § 3).
 
 Server facts come from ADR-003; the caching rules from ADR-002. Keepiq's own `offline-readonly-cache` spec (in the Keepiq app repo) is the model for stale-data and read-only-offline behaviour.
 
@@ -31,7 +31,7 @@ Server facts come from ADR-003; the caching rules from ADR-002. Keepiq's own `of
 - **TOTP is a TypeScript port of the web app's `src/totp/totp.js`.** Same acceptance rules (otpauth URI or bare base32, SHA1/6/30 defaults, HOTP rejected) so a seed that works in Keepiq works here. Computed in the popup with WebCrypto HMAC since the popup already holds the decrypted seed for display. Alternative: a third-party OTP library, which adds a dependency for 80 lines.
 - **Search is plaintext only.** `name` and `url` are the only searchable plaintext fields (ADR-003). Decrypting every row per keystroke is a no-go at RSA-4096 cost. Recorded as a deviation.
 - **Type icons, no favicons.** Locked by ADR-002: no fetch from sites, no icon service. Type icons follow the web app's `typeIconName` mapping. The card renderer takes an optional icon data URL from the row so a future Keepiq favicon property can light up without touching the list code. Alternative: Bitwarden's icon server, which is a third party to Keepiq users.
-- **Vanilla TypeScript views, one module per view.** The template has no framework and the popup is small; `entrypoints/popup/views/*.ts` export `mount(container, ctx): () => void` (the return tears the view down and drops decrypted state). A simple in-memory view stack in `shell.ts` handles list to detail and back. Alternative: adopt Vue as the web app does, a larger decision that should be taken once, by ext-accounts-and-unlock or not at all.
+- **React components and hooks per ADR-004.** ext-accounts-and-unlock installs React through `@wxt-dev/module-react` and creates `main.tsx`, `App.tsx`, the `useMessage` and `usePopupState` hooks and the `Header`, `Button`, `TextField` and `ErrorBanner` components; this change builds on those. Views compose components; components talk to the background only through hooks over `src/messages.ts`, never through `src/api/` or `src/crypto/`. Decrypted values are React state requested on mount and dropped on unmount (`useDecryptedFields`), which is how the "memory only" rules in the specs are met. The list-to-detail view stack is local state in `Shell`. Alternative: the template's vanilla modules, which ADR-004 retired because the item card, masked field and filter chip recur across five later changes.
 - **Last tab in `storage.session`, guarded.** Bitwarden reopens on the vault but restores the last route in some flows; keeping just the tab id is the useful part. `storage.session` is absent below Firefox 115, so the background falls back to a memory variable, exactly as ADR-002 does for the key.
 - **Pop out via `browser.windows.create`.** Identical on MV3 and MV2. The tab that was active is passed as `?tabId=` because `tabs.query({ active: true })` in a popout window returns the popout itself. Bitwarden's `uilocation=popout` is the model.
 - **Active tab read with `tabs` permission.** `activeTab` would cover the toolbar popup but not the popout window or later autofill work; Bitwarden requests `tabs`. `browser.tabs.query({ active: true, lastFocusedWindow: true })` works on both browsers.
@@ -50,13 +50,20 @@ Added:
 - `src/totp/totp.ts`: `parseTotpSeed(value)`, `generateCode(params, now)`, `secondsRemaining(period, now)`.
 - `src/clipboard.ts`: `copyText(text)` for the popup, `clearClipboard()` for the background with the Chrome offscreen and Firefox page paths.
 - `entrypoints/offscreen/index.html`, `entrypoints/offscreen/main.ts`: Chrome-only clipboard-clear document (`include: ['chrome']`).
-- `entrypoints/popup/views/shell.ts`: header, tab bar, view stack, locked and logged-out gating, popout detection.
-- `entrypoints/popup/views/vault-list.ts`, `item-card.ts`, `filters.ts`, `suggestions.ts`, `item-detail.ts`, `placeholder.ts`, `toast.ts`.
+- `entrypoints/popup/views/Shell.tsx`: tab bar, view stack (list to detail and back), locked and logged-out gating, popout detection, last-tab round trip.
+- `entrypoints/popup/views/VaultList.tsx`: search, folder and type filters, suggestions section, sorted list, empty and offline states.
+- `entrypoints/popup/components/Suggestions.tsx`: the "Autofill suggestions" block above the list, its own component because ext-autofill adds an `onFill` callback to it.
+- `entrypoints/popup/components/Toast.tsx`: transient confirmation and failure messages, used first by copy and later by fill.
+- `entrypoints/popup/views/ItemDetail.tsx`: per-type sections, metadata, disabled Edit and Delete.
+- `entrypoints/popup/views/Placeholder.tsx`: Generator, Send and Settings until their changes land.
+- `entrypoints/popup/components/TabBar.tsx`, `SearchField.tsx`, `FolderSelect.tsx`, `TypeFilterChips.tsx`, `ItemCard.tsx` (type icon, name, subtitle, Launch, Copy menu, More menu), `Menu.tsx`, `MaskedField.tsx` (masked value with reveal and copy, reused by detail, forms and send), `TotpCode.tsx` (code plus countdown), `Banner.tsx` (offline and stale), `EmptyState.tsx`.
+- `entrypoints/popup/hooks/useVaultSnapshot.ts` (`vault.snapshot` with the current tab URL, refetch on `vault.changed`), `useDecryptedFields.ts` (`item.decrypt` for `ids` and `fields` on mount, state dropped on unmount), `useCurrentTab.ts` (`tabs.query` or the popout `tabId` parameter), `useClipboard.ts` (`copyText` plus `clipboard.copied`).
 
 Edited:
 
 - `entrypoints/background.ts`: message arms for `vault.sync`, `vault.snapshot`, `item.decrypt`, `clipboard.copied`, `popup.popout`; alarm listener for `vault-sync` and `clipboard-clear`; hooks on unlock, lock and logout from ext-accounts-and-unlock.
-- `entrypoints/popup/index.html`, `main.ts`, `popup.css`: shell markup, bootstrap, tokens and layout.
+- `entrypoints/popup/App.tsx` (from ext-accounts-and-unlock): renders `Shell` once unlocked; the `Header` component gains the host subtitle and the pop-out button.
+- `entrypoints/popup/popup.css`: 380 px width, 600 px max height, fixed header and tab bar regions, `data-theme` token overrides, popout fluid width; component styles split into files next to their components as they grow.
 - `src/messages.ts`: the types below.
 - `wxt.config.ts`: `permissions` gain `alarms`, `tabs`, `unlimitedStorage`; `offscreen` added when `browser === 'chrome'`; `clipboardWrite` when `browser === 'firefox'`.
 - `package.json`: `tldts` dependency; `vitest` dev dependency if task 5.1 is taken.
@@ -140,4 +147,3 @@ export type BackgroundToPopup =
 - Whether "Sync now" also belongs in the Vault tab header when not offline, or only in ext-settings.
 - Whether to add an "also match username when unlocked" search option that decrypts lazily as the user types, accepting the cost.
 - Whether `storage.session` is the right home for `popup:lastTab` or Bitwarden's plain "always open on Vault" is preferable.
-- Vue versus vanilla TypeScript for popup views, if ext-accounts-and-unlock has not already decided.

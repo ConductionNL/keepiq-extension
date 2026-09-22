@@ -15,28 +15,28 @@
 
 ## 2. Popup shell
 
-- [ ] 2.1 Rework `entrypoints/popup/index.html` and `popup.css`: 380 px width, 600 px max height with scrolling content, fixed header and tab bar regions, `data-theme` token overrides, popout fluid width
-- [ ] 2.2 Add `entrypoints/popup/views/shell.ts` and `placeholder.ts`; rewrite `entrypoints/popup/main.ts` to bootstrap the shell: header with title, host and avatar slot, tab bar Vault/Generator/Send/Settings, view stack, locked and logged-out gating, `popup.lastTab` round trip
+- [ ] 2.1 Rework `entrypoints/popup/popup.css`: 380 px width, 600 px max height with scrolling content, fixed header and tab bar regions, `data-theme` token overrides, popout fluid width
+- [ ] 2.2 Add `entrypoints/popup/views/Shell.tsx`, `views/Placeholder.tsx` and `components/TabBar.tsx`; mount `Shell` from `App.tsx` once unlocked; extend the `Header` component with the host subtitle and pop-out button; view stack, locked and logged-out gating, `popup.lastTab` round trip through `useMessage`
   - Tab bar hidden while locked or logged out; placeholders on Generator, Send, Settings
-- [ ] 2.3 Add pop out: `popup.popout` arm in the background using `browser.windows.create` with `?popout=1&tabId=`, popup closes itself, button hidden in popout; add `tabs` permission
+- [ ] 2.3 Add pop out: `popup.popout` arm in the background using `browser.windows.create` with `?popout=1&tabId=`, popup closes itself, button hidden in popout; add `hooks/useCurrentTab.ts` reading `tabs.query` or the `tabId` parameter; add `tabs` permission
   - Verified on Chrome and Firefox builds
 
 ## 3. Vault list
 
-- [ ] 3.1 Add `entrypoints/popup/views/filters.ts`: search input, folder dropdown (All items, flattened tree, No folder), type chips with More menu built from snapshot types; filters compose
-- [ ] 3.2 Add `entrypoints/popup/views/vault-list.ts` and `item-card.ts` with `src/vault/icons.ts`: locale sort by name with id tiebreak, type icon, name, lazy login subtitle via batched `item.decrypt` for rows in view, blocked badge
-- [ ] 3.3 Add `entrypoints/popup/views/suggestions.ts`: "Autofill suggestions" section from `suggestionIds`, host heading, hidden without an http(s) tab, "No items for <host>" when empty
-- [ ] 3.4 Add card actions: Launch via `browser.tabs.create` (https prefix), Copy menu (username, password, verification code) through `src/clipboard.ts` and a toast, More menu with View enabled and Edit/Clone/Move/Delete disabled with tooltip
-- [ ] 3.5 Add `clipboard.copied` arm, `clipboard-clear` alarm and `clearClipboard()` with the Chrome offscreen document (`entrypoints/offscreen/`, `offscreen` permission) and the Firefox page path (`clipboardWrite`)
+- [ ] 3.1 Add `components/SearchField.tsx`, `FolderSelect.tsx` (All items, flattened tree, No folder) and `TypeFilterChips.tsx` (chips plus More menu built from snapshot types); filter state lives in `VaultList` and composes
+- [ ] 3.2 Add `views/VaultList.tsx`, `components/ItemCard.tsx` and `src/vault/icons.ts` with `hooks/useVaultSnapshot.ts` and `hooks/useDecryptedFields.ts`: locale sort by name with id tiebreak, type icon, name, lazy login subtitle via batched `item.decrypt` for rows in view, blocked badge, decrypted state dropped on unmount
+- [ ] 3.3 Add `components/Suggestions.tsx` rendered by `VaultList` from `suggestionIds` and `useCurrentTab`: host heading, hidden without an http(s) tab, "No items for <host>" when empty
+- [ ] 3.4 Add `components/Menu.tsx` and the `ItemCard` actions: Launch via `browser.tabs.create` (https prefix), Copy menu (username, password, verification code) through `hooks/useClipboard.ts` and `components/Toast.tsx`, More menu with View enabled and Edit/Clone/Move/Delete disabled with tooltip
+- [ ] 3.5 Add `clipboard.copied` arm, `clipboard-clear` alarm and `clearClipboard()` in `src/clipboard.ts` with the Chrome offscreen document (`entrypoints/offscreen/`, `offscreen` permission) and the Firefox page path (`clipboardWrite`)
   - Delay read from `settings.clearClipboardMs`, absent means never; build both targets
-- [ ] 3.6 Add list states: syncing on first sync, empty vault, no matches with Clear filters, blocked-only, offline banner with "Last synced <relative>" and "Sync now", first-sync error with retry
+- [ ] 3.6 Add `components/Banner.tsx` and `EmptyState.tsx` and the list states: syncing on first sync, empty vault, no matches with Clear filters, blocked-only, offline banner with "Last synced <relative>" and "Sync now", first-sync error with retry
 
 ## 4. Item detail
 
 - [ ] 4.1 Add `src/totp/totp.ts` ported from the web app's `src/totp/totp.js`: otpauth and bare base32 parsing, SHA1/SHA256/SHA512, 6 or 8 digits, period, RFC 6238 code with WebCrypto, `secondsRemaining`
-- [ ] 4.2 Add `entrypoints/popup/views/item-detail.ts`: back control restoring list state, header with type label and folder path, Login credentials (masked password, reveal, copy), TOTP code with countdown and invalid-seed state, Website, Additional fields (masked, `notes` routed to Notes), Notes, Metadata
-- [ ] 4.3 Add card, identity, passkey, generic and blocked renderers to the detail view: card brand and last four derived in memory, BSN masked, passkey not-yet-supported note and no private key in the DOM, blocked reason with web app link
-- [ ] 4.4 Add disabled Edit and Delete with tooltip; teardown stops TOTP timers and drops decrypted values on back, popup close and `vault.locked`
+- [ ] 4.2 Add `views/ItemDetail.tsx`, `components/MaskedField.tsx` (masked value, reveal, copy) and `components/TotpCode.tsx` (code plus countdown, invalid-seed state): back control restoring list state, header with type label and folder path, Login credentials, TOTP, Website, Additional fields (masked, `notes` routed to Notes), Notes, Metadata; values through `useDecryptedFields`
+- [ ] 4.3 Add card, identity, passkey, generic and blocked sections to `ItemDetail`: card brand and last four derived in memory, BSN masked, passkey not-yet-supported note and no private key in the DOM, blocked reason with web app link and no decrypt request
+- [ ] 4.4 Add disabled Edit and Delete with tooltip; `TotpCode` and `useDecryptedFields` cleanup stops timers and drops decrypted state on unmount, and `Shell` unmounts the view on `vault.locked`
 
 ## 5. Verification
 

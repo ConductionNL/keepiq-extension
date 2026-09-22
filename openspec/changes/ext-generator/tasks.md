@@ -18,6 +18,7 @@
   - 1000 passwords per option set: exact length, minimum counts met, no disabled class, no ambiguous character when avoided.
   - Passphrase word count, separator and single-digit rule.
   - `randomInt` distribution over 7776 buckets has no empty bucket after 1 000 000 draws and no bucket above twice the mean.
+  - No component tests in this change (ADR-004).
 
 ## 3. Background state
 
@@ -31,13 +32,15 @@
 
 ## 4. Popup
 
-- [ ] 4.1 Add `entrypoints/popup/views/generator.ts` with the Password, Passphrase and Username sub-tabs, the monospace output box with colour-coded digits and specials, Regenerate and Copy (through `src/clipboard.ts`), generation on open and on every option change, and options saved on change.
-  - Styles in `entrypoints/popup/popup.css`; no webfonts.
-- [ ] 4.2 Build the Password controls: slider paired with number input, four class toggles, minimum numbers and minimum special inputs, avoid ambiguous toggle, and the policy clamp with disabled controls labelled "Set by your organisation".
-- [ ] 4.3 Build the Passphrase controls (number of words, separator, capitalize, include number) and the Username controls (type select, word toggles, email and domain inputs, Random or Website name sub-mode disabled with "No website detected" when `websiteHost` is null), including the "Enter an email address" and "Wordlist unavailable" output states.
-- [ ] 4.4 Add `entrypoints/popup/views/generator-history.ts`: newest first, colour-coded value, relative time, Copy per entry, Clear with confirmation, empty state "No generated values yet"; record history on Regenerate, Copy, "Use this password" and sub-tab blur.
-- [ ] 4.5 Wire pick mode: accept `{ pick: { field } }` from the shell navigation state, show "Use this password", return `{ picked: { field, value } }` and navigate back; hook the item form's Generate buttons if `ext-vault-edit` has landed, otherwise leave the entry point documented in `design.md`.
-- [ ] 4.6 Register the Generator tab in the shell and add the "Generate a password" link on the lock screen that opens the view with the tab bar hidden and pick mode unavailable.
+- [ ] 4.1 Add the components `SubTabs.tsx`, `OptionToggle.tsx`, `LengthSlider.tsx` and `GeneratedValue.tsx` under `entrypoints/popup/components/`: `GeneratedValue` renders the value in monospace with colour-coded digits and symbols, Regenerate, Copy through the shared copy hook and an optional "Use this password" button; `LengthSlider` and `OptionToggle` take a `lockedBy` label that disables the control.
+  - Styles in `entrypoints/popup/popup.css`; no webfonts, no CSS-in-JS.
+- [ ] 4.2 Add the hooks `useGeneratorOptions.ts` (loads through `generator.getContext`, saves through `generator.saveOptions` on every change, exposes sanitised options, policy, account email and website host) and `useGeneratorHistory.ts` (`generator.history.list`, `add`, `clear`) under `entrypoints/popup/hooks/`.
+  - Hooks are the only place generator messages are sent; components never call `browser.*`.
+- [ ] 4.3 Add `entrypoints/popup/views/Generator.tsx` with `SubTabs` and the Password panel: `LengthSlider`, four class `OptionToggle`s, minimum numbers and minimum special inputs, avoid ambiguous toggle, policy clamp rendered as `lockedBy="Set by your organisation"`, generation via `src/generator/password.ts` on mount and on every option change with the value in `useState`.
+- [ ] 4.4 Add the Passphrase panel (number of words, separator, capitalize, include number) and the Username panel (type select, word toggles, email and domain inputs, Random or Website name sub-mode disabled with "No website detected" when `websiteHost` is null) to `Generator.tsx`, including the "Enter an email address" and "Wordlist unavailable" output states.
+- [ ] 4.5 Add `entrypoints/popup/views/GeneratorHistory.tsx` on `useGeneratorHistory`: newest first, `GeneratedValue` styling, relative time, Copy per entry, Clear with confirmation, empty state "No generated values yet"; record history on Regenerate, Copy, "Use this password" and sub-tab blur.
+- [ ] 4.6 Wire pick mode: `Generator` reads `{ pick: { field, onPick } }` from the shell router state, shows "Use this password", calls `onPick(value)` and navigates back; hook the item form's Generate buttons if `ext-vault-edit` has landed, otherwise leave the `pick` contract documented in `design.md`.
+- [ ] 4.7 Register the Generator tab in `entrypoints/popup/App.tsx` and add the "Generate a password" link on the lock screen that renders `Generator` with the tab bar hidden and no `pick` state.
 
 ## 5. Verification
 
