@@ -82,6 +82,12 @@ Only `name`, `url`, `typeId` and `folderId` are needed for list, search and URL 
 
 Content scripts run in hostile pages. They never hold vault state, never receive the private key, and receive exactly one credential for one fill over a runtime message after the user explicitly picked it. URL matching happens in the background.
 
+## Website icons
+
+The extension never fetches favicons from the sites in the vault or from an icon service. Both tell someone outside the user's Keepiq server which domains the user has accounts on, and when the vault was opened. Items show a type icon instead.
+
+The intended future path is a favicon stored on the secret itself in Keepiq, as base64 image data set by the web app when a secret is created or its URL changes, and served with the row like any other plaintext metadata. The extension would then render icons straight from the cached snapshot with no request at all. That is a Keepiq change, not an extension one; until it lands, no icon fetching is added under any setting.
+
 ## Clipboard
 
 Fill is preferred over copy. Copy auto-clears the clipboard after a configurable delay, default off in Bitwarden but offered with the same options (10 seconds to 5 minutes, or never).

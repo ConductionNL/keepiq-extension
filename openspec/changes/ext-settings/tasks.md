@@ -1,7 +1,7 @@
 ## 1. Schema and store
 
 - [ ] 1.1 Create `src/settings/schema.ts` with the `SETTINGS` table (key, scope, default, validator) and the derived `SettingsValues` type for every entry in the spec
-  - Defaults match the spec: timeout 15 minutes, action Lock, clipboard Never, favicons off, theme System default, autofill on page load off
+  - Defaults match the spec: timeout 15 minutes, action Lock, clipboard Never, theme System default, autofill on page load off
   - Each validator returns the default for an unknown or malformed value
 - [ ] 1.2 Create `src/settings/store.ts` reading and writing `settings:<accountId>` and `settings:global` in `storage.local`, patching rather than replacing, and deleting the account record on account removal
 - [ ] 1.3 Create `src/settings/policy.ts` with `TimeoutPolicy`, `NO_POLICY` and `applyPolicy` clamping the timeout and forcing the action without rewriting the stored value
@@ -11,7 +11,7 @@
 - [ ] 2.1 Add `settings.get`, `settings.set`, `settings.server.set`, `pin.enable`, `pin.disable`, `pin.unlock`, `about.get` and the `SettingsSnapshot`, `ServerSettings`, `PinUnlockResult`, `AboutInfo` types to `src/messages.ts`
 - [ ] 2.2 Handle the new kinds in `entrypoints/background.ts` and feed the ADR-002 timeout config from the store through `applyPolicy` on every read
   - Request/response arms return the Promise; nothing new is fire-and-forget
-  - The clipboard clear delay and favicon toggle are read by ext-vault-browse through the same snapshot
+  - The clipboard clear delay is read by ext-vault-browse through the same snapshot
 
 ## 3. PIN unlock
 
@@ -29,7 +29,7 @@
 - [ ] 5.2 Create `account-security.ts`: timeout options with Custom entry and policy-aware hiding, Never warning with confirmation, action with Log out note, Lock now, Log out with confirmation, PIN toggle and dialog, biometrics disabled, Change master password link, `session_timeout` shown read-only as "Web app default"
 - [ ] 5.3 Create `autofill.ts`: the five entries with their warnings and notes, the inline-menu "Coming later" state from `capabilities.inlineMenu`, shortcut display from `browser.commands.getAll()` with the Chromium link and the Firefox instructions, clear clipboard options
 - [ ] 5.4 Create `notifications.ts`: Ask to add, Ask to update, Excluded domains with Add current site via `activeTab`, free-text add, duplicate and empty rejection, remove; the Keepiq server notifications subsection with stale indicator, disabled-offline and revert-on-error behaviour
-- [ ] 5.5 Create `vault.ts`: Sync now with Last sync and the offline failure message, Folders entry opening the ext-vault-edit folder manager, Import and Export links to the web app, Show website icons, Default item type from cached types with the `login` fallback and note
+- [ ] 5.5 Create `vault.ts`: Sync now with Last sync and the offline failure message, Folders entry opening the ext-vault-edit folder manager, Import and Export links to the web app, Default item type from cached types with the `login` fallback and note
 - [ ] 5.6 Create `appearance.ts` and extend `entrypoints/popup/popup.css`: theme applied via `data-theme` before first paint, compact mode tokens, show animations class, quick copy actions toggle, read-only Language line
 - [ ] 5.7 Create `about.ts`: version from the manifest, server origin, Help, Report a bug, Privacy policy, Keepiq web app links, Rate the extension hidden while the store constant is `<store-url>`
 

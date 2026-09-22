@@ -13,7 +13,7 @@ chain:
 
 ## Why
 
-The popup shell from ext-accounts-and-unlock has a Settings tab with nothing behind it, and every other change in the chain needs a place to read its knobs from: the vault timeout and action (ADR-002), the clipboard clear delay, the autofill defaults, the favicon toggle, the theme. Without one schema those values end up as ad hoc `storage.local` keys with different defaults in every module.
+The popup shell from ext-accounts-and-unlock has a Settings tab with nothing behind it, and every other change in the chain needs a place to read its knobs from: the vault timeout and action (ADR-002), the clipboard clear delay, the autofill defaults, the theme. Without one schema those values end up as ad hoc `storage.local` keys with different defaults in every module.
 
 This change is spec 6 of 7 in the extension chain. It mirrors the Bitwarden browser extension's Settings tab (ADR-001) and defines the one settings schema every earlier and later change reads through.
 
@@ -44,7 +44,7 @@ None. `openspec/specs/` is empty today.
 - **Change master password** opens the Keepiq web app instead of a form. ADR-003 places master password changes out of reach for an app-password client.
 - **Import items** and **Export vault** open the Keepiq web app. There is no in-extension import or export; Keepiq's web app owns both.
 - **Show identities as suggestions** and **Show cards as suggestions** are not rendered until ext-autofill supports those item types. Bitwarden shows them by default.
-- **Show website icons** defaults to off. Bitwarden defaults to on; the favicon fetch leaks visited domains to a third party, and ext-vault-browse left the favicon source open.
+- **No "Show website icons" setting.** Bitwarden has one, on by default. ADR-002 rules out fetching icons from sites or icon services, so there is nothing to toggle; the setting returns when Keepiq stores a favicon on the secret.
 - **Language** is read-only and follows the browser UI language. Bitwarden offers a picker; WXT's i18n module is the intended route once translations exist.
 - **Five wrong PINs** return the unlock screen to master-password mode and discard the PIN-wrapped key. Bitwarden logs the account out instead. Keepiq's logout costs a new app password, which is disproportionate for a mistyped PIN.
 - **Keepiq server notifications** and **Default item type** are additions. They mirror Keepiq's own per-user preferences so the extension and the web app agree.
@@ -61,6 +61,6 @@ Sync now reuses the sync routine from ext-vault-browse and adds no calls of its 
 
 - New: `src/settings/schema.ts`, `src/settings/store.ts`, `src/settings/policy.ts`, `src/settings/pin.ts`, `src/settings/server-mirror.ts`, `entrypoints/popup/views/settings/*`.
 - Edited: `src/messages.ts` (settings, PIN and About message kinds), `entrypoints/background.ts` (handlers, timeout config fed from settings, PIN unlock, clearing the PIN blob on lock and logout), the unlock view from ext-accounts-and-unlock (PIN field), `entrypoints/popup/popup.css` (theme tokens, compact mode).
-- Other changes in the chain read their knobs through `settings.get` instead of their own keys: ext-accounts-and-unlock (timeout, action), ext-vault-browse (clipboard clear, favicons, quick copy actions), ext-vault-edit (default item type), ext-autofill (every Autofill and Notifications entry).
+- Other changes in the chain read their knobs through `settings.get` instead of their own keys: ext-accounts-and-unlock (timeout, action), ext-vault-browse (clipboard clear, quick copy actions), ext-vault-edit (default item type), ext-autofill (every Autofill and Notifications entry).
 - No new manifest permissions. The `commands` entry the shortcut display reads is declared by ext-autofill.
 - Security: a PIN-wrapped copy of the private key can live in `storage.local`. Design.md states the trade-off and the mitigations.

@@ -203,7 +203,7 @@ The extension SHALL show a "Keepiq server notifications" subsection with the tog
 - **THEN** the subsection shows "Not loaded yet" and no toggles
 
 ### Requirement: Vault section entries
-The extension SHALL show Sync now with "Last sync: <time>" (or "Never" before the first sync), Folders (opens the folder manager from ext-vault-edit), Import items and Export vault (each opens the Keepiq web app in a new tab), Show website icons (default off, stored per account in `storage.local`) and Default item type. Default item type mirrors the server's `default_secret_type` with the same cache, stale and write rules as the server notification toggles, offers the cached secret types by label, and falls back to `login` when the server value matches no cached type.
+The extension SHALL show Sync now with "Last sync: <time>" (or "Never" before the first sync), Folders (opens the folder manager from ext-vault-edit), Import items and Export vault (each opens the Keepiq web app in a new tab) and Default item type. There is no website-icons setting; icon fetching is ruled out by ADR-002. Default item type mirrors the server's `default_secret_type` with the same cache, stale and write rules as the server notification toggles, offers the cached secret types by label, and falls back to `login` when the server value matches no cached type.
 
 #### Scenario: Sync now
 - **GIVEN** an unlocked account online

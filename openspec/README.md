@@ -21,7 +21,7 @@ Changes build on each other in this order. Each proposal lists its predecessors 
 6. `ext-settings`: the Settings tab
 7. `ext-autofill`: fill from popup, context menu, shortcut, save and update prompts
 
-Later slices not yet specced: inline autofill menu, passkey provider, TOTP autofill, card and identity fill, password history, import and export.
+Later slices not yet specced: inline autofill menu, passkey provider, TOTP autofill, card and identity fill, password history, import and export. Website icons wait on a Keepiq change that stores a favicon on the secret (ADR-002).
 
 ## Server facts
 
