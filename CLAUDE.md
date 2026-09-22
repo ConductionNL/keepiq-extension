@@ -19,14 +19,14 @@ Built with [WXT](https://wxt.dev). One source builds **Chromium MV3 and Firefox 
 npm install            # postinstall runs `wxt prepare`, which generates .wxt/
 npm run dev            # Chromium dev + HMR, auto-launches a browser
 npm run dev:firefox    # Firefox dev (MV2) + HMR
-npm run compile        # tsc --noEmit — TYPECHECK ONLY, does not build or catch MV drift
+npm run typecheck      # tsc --noEmit — does not build or catch MV drift
 npm run lint           # eslint .  (lint:fix to autofix)
 npm run build          # Chrome production → .output/chrome-mv3/
 npm run build:firefox  # Firefox production → .output/firefox-mv2/
 npm run zip            # Store-submission zip (zip:firefox for the MV2 one)
 ```
 
-There is no test runner yet. `npm run compile` only typechecks.
+There is no test runner yet. `npm run typecheck` is the only automated check besides lint.
 
 `wxt.config.ts` generates the manifest — there is no hand-written `manifest.json`.
 Do **not** set a global `manifestVersion` there: it breaks Firefox dev (Firefox MV3

@@ -7,12 +7,12 @@
 	"scripts": {
 		"build": "wxt build",
 		"build:firefox": "wxt build -b firefox",
-		"compile": "tsc --noEmit",
 		"dev": "wxt",
 		"dev:firefox": "wxt -b firefox",
 		"lint": "eslint .",
 		"lint:fix": "eslint . --fix",
 		"postinstall": "wxt prepare",
+		"typecheck": "tsc --noEmit",
 		"zip": "wxt zip",
 		"zip:firefox": "wxt zip -b firefox"
 	},

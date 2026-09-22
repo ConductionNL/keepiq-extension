@@ -19,7 +19,7 @@ Non-standard browser install? Copy `web-ext.config.example.ts` to
 ## Checks & builds
 
 ```sh
-npm run compile        # tsc --noEmit — typecheck only, does NOT build
+npm run typecheck      # tsc --noEmit — does NOT build
 npm run lint           # eslint .  (lint:fix to autofix)
 npm run build          # Chrome production → .output/chrome-mv3/
 npm run build:firefox  # Firefox production → .output/firefox-mv2/

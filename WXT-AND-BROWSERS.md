@@ -13,7 +13,7 @@ under `entrypoints/` or `src/`.
 | Let WXT pick the manifest version per browser (Chrome MV3, Firefox MV2) | Set a global `manifestVersion` in `wxt.config.ts` — it breaks Firefox dev |
 | Write manifest-version-agnostic code; shim APIs that differ (e.g. `action`) | Assume an MV3-only API exists — Firefox builds as MV2 |
 | Type message payloads as `unknown` and assert the shape at the boundary | Type a listener param as the concrete envelope — the polyfill types it `unknown` |
-| Build **both** targets before committing a browser-facing change | Trust `npm run compile` alone — it only typechecks, it doesn't build or catch MV drift |
+| Build **both** targets before committing a browser-facing change | Trust `npm run typecheck` alone — it doesn't build or catch MV drift |
 
 ## 1. Always use `browser.*`, never `chrome.*`
 
@@ -101,9 +101,7 @@ browser.runtime.onMessage.addListener((msg: unknown, sender: Runtime.MessageSend
 
 ## 4. Build, typecheck, load
 
-`npm run compile` runs `tsc --noEmit` and **only typechecks** — it does **not**
-produce a loadable build, and it will **not** catch manifest-version / runtime-API
-drift between Chrome and Firefox. To actually load changes you must build (or run
+`npm run typecheck` runs `tsc --noEmit` — it does **not** produce a loadable build, and it will **not** catch manifest-version / runtime-API drift between Chrome and Firefox. To actually load changes you must build (or run
 dev) and reload the extension in the browser.
 
 | Command | What it does |
@@ -113,7 +111,7 @@ dev) and reload the extension in the browser.
 | `npm run build` | Chrome production build (MV3) |
 | `npm run build:firefox` | Firefox production build (MV2) |
 | `npm run zip` / `zip:firefox` | Store-submission zips |
-| `npm run compile` | Typecheck only (no build) |
+| `npm run typecheck` | `tsc --noEmit` (no build) |
 | `npm run lint` / `lint:fix` | ESLint |
 
 `wxt prepare` (run automatically by `postinstall`) generates `.wxt/` — the
@@ -136,6 +134,6 @@ locations when `wxt dev` launches a browser. Copy `web-ext.config.example.ts` to
 
 1. No `chrome.*` in executable code — `grep -rn "chrome\." src/ entrypoints/`
    should only match comments/prose.
-2. `npm run compile` and `npm run lint` are clean.
+2. `npm run typecheck` and `npm run lint` are clean.
 3. **Build both targets** — `npm run build && npm run build:firefox`. MV
    differences surface at build/runtime, not always at typecheck.
