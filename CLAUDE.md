@@ -2,14 +2,14 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-## What __EXT_NAME__ is
+## What Keepiq is
 
 <!-- Replace this paragraph. One or two sentences on what the extension does and
 who it is for — everything below inherits its priorities from this. Then link the
 file that holds the full scope (a spec, a roadmap, an issue) and say plainly that
 it, not this file, is the source of truth for scope. -->
 
-__EXT_DESCRIPTION__
+Browser extension for Keepiq, the encrypted secrets manager for Nextcloud. Fill in logins, passkeys and one-time codes on any site, and save new ones as you go. Everything is encrypted — your master password and your secrets never reach the server.
 
 ## Stack & commands
 

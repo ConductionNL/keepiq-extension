@@ -1,8 +1,8 @@
 {
-	"name": "__PKG_NAME__",
+	"name": "@conduction/keepiq-extension",
 	"version": "0.0.1",
 	"private": true,
-	"description": "__EXT_DESCRIPTION__",
+	"description": "Browser extension for Keepiq, the encrypted secrets manager for Nextcloud. Fill in logins, passkeys and one-time codes on any site, and save new ones as you go. Everything is encrypted — your master password and your secrets never reach the server.",
 	"type": "module",
 	"scripts": {
 		"build": "wxt build",
@@ -10,7 +10,6 @@
 		"compile": "tsc --noEmit",
 		"dev": "wxt",
 		"dev:firefox": "wxt -b firefox",
-		"init": "node scripts/init.mjs",
 		"lint": "eslint .",
 		"lint:fix": "eslint . --fix",
 		"postinstall": "wxt prepare",

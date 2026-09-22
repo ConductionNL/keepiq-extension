@@ -41,7 +41,7 @@ export default defineContentScript({
 		browser.runtime.onMessage.addListener((msg: unknown) => {
 			const m = msg as BackgroundToContent
 			if (m.kind === 'enabled_changed') {
-				console.debug('[__EXT_SLUG__] enabled:', m.enabled)
+				console.debug('[keepiq] enabled:', m.enabled)
 			}
 			// Return undefined — fire-and-forget, no reply expected.
 		})
